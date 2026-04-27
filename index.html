@@ -1119,7 +1119,7 @@
 
     <div id="equation-bar">7 + 5 = ?</div>
 
-    <div id="ready-overlay">¡LISTO!</div>
+    <div id="ready-overlay">¡LISTA!</div>
   </div>
 </div>
 
@@ -1182,7 +1182,7 @@
     </div>
 
     <div id="race-equation-bar">7 + 5 = ?</div>
-    <div id="race-ready-overlay">¡LISTO!</div>
+    <div id="race-ready-overlay">¡LISTA!</div>
     <div id="boost-flash"></div>
     <div id="level-banner"></div>
   </div>
@@ -2420,10 +2420,10 @@ async function startFallingGame() {
   // Ready overlay
   readyOverlay.style.display = 'flex';
   readyOverlay.classList.remove('go');
-  readyOverlay.textContent = '¿LISTO?';
+  readyOverlay.textContent = '¿LISTA?';
   sndStart();
   await sleep(900);
-  readyOverlay.textContent = 'PREPARADO...';
+  readyOverlay.textContent = 'PREPARADA...';
   sndReady();
   await sleep(700);
   readyOverlay.classList.add('go');
@@ -2980,7 +2980,7 @@ async function startRaceGame(carIdx) {
   // Ready overlay
   raceReady.style.display = 'flex';
   raceReady.classList.remove('go');
-  raceReady.textContent = '¿LISTO?';
+  raceReady.textContent = '¿LISTA?';
   sndStart();
   await sleep(900);
   raceReady.textContent = '¡A CORRER!';
