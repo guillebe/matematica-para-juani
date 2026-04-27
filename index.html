@@ -36,6 +36,9 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    /* Block iOS double-tap zoom site-wide */
+    touch-action: manipulation;
     cursor: crosshair;
   }
 
@@ -240,6 +243,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    touch-action: none;
   }
 
   #hud {
@@ -510,6 +514,8 @@
     height: 100%;
     overflow: hidden;
     background: #1a3a1a; /* grass fallback */
+    /* Take full control of touch events — no double-tap zoom, no pinch */
+    touch-action: none;
   }
   #race-shake {
     position: absolute; inset: 0;
