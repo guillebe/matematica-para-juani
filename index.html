@@ -791,6 +791,161 @@
     100% { background-position: 0 30px; }
   }
 
+  /* ===== MAZE ===== */
+  #maze { padding: 0; }
+  #maze.screen { overflow: hidden; padding: 0; }
+  #maze-wrapper {
+    position: relative;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px;
+  }
+  #maze-hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 14px 18px;
+    z-index: 20;
+    pointer-events: none;
+    font-family: 'Press Start 2P', monospace;
+    gap: 12px;
+  }
+  #maze-hud .panel {
+    background: rgba(10, 4, 32, 0.9);
+    border: 3px solid var(--neon-cyan);
+    padding: 10px 14px;
+    box-shadow: 4px 4px 0 #000;
+    pointer-events: auto;
+    color: var(--neon-yellow);
+    font-size: 14px;
+  }
+  #maze-hud .panel small {
+    display: block;
+    font-size: 10px;
+    color: var(--neon-cyan);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  #maze-canvas {
+    image-rendering: pixelated;
+    border: 4px solid var(--neon-purple);
+    box-shadow: 8px 8px 0 #000, inset 0 0 0 3px rgba(177,74,237,0.4);
+    background: #0a0420;
+  }
+  #maze-tip {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 2px;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  /* Math modal (used by maze) */
+  #math-modal, #level-complete-modal {
+    position: absolute; inset: 0;
+    z-index: 100;
+    display: none;
+    align-items: center; justify-content: center;
+    background: rgba(10,4,32,0.85);
+    backdrop-filter: blur(2px);
+  }
+  #math-modal.show, #level-complete-modal.show { display: flex; }
+
+  .math-card, .level-complete-card {
+    background: var(--bg-2);
+    border: 5px solid var(--neon-yellow);
+    box-shadow: 10px 10px 0 #000, inset 0 0 0 3px rgba(255,230,0,0.25);
+    padding: 32px 28px;
+    text-align: center;
+    max-width: 520px;
+    width: min(520px, 92%);
+    animation: modalPop 240ms steps(3) forwards;
+  }
+  @keyframes modalPop {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  .math-prompt {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(28px, 5vw, 44px);
+    color: var(--neon-yellow);
+    text-shadow: 4px 4px 0 #000;
+    margin-bottom: 24px;
+    letter-spacing: 4px;
+  }
+  .math-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .math-option {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 22px;
+    padding: 18px 0;
+    background: var(--neon-cyan);
+    color: #000;
+    border: 4px solid #000;
+    box-shadow: 4px 4px 0 #000;
+    cursor: pointer;
+    transition: transform 60ms steps(2);
+  }
+  .math-option:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #000; }
+  .math-option:active { transform: translate(1px, 1px); box-shadow: 2px 2px 0 #000; }
+  .math-option.correct {
+    animation: optionCorrect 500ms steps(4) forwards;
+    background: var(--neon-green);
+  }
+  .math-option.wrong {
+    animation: optionWrong 500ms steps(4) forwards;
+    background: var(--neon-red);
+  }
+  @keyframes optionCorrect {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.2) rotate(-4deg); filter: brightness(1.4); }
+    100% { transform: scale(0); opacity: 0; }
+  }
+  @keyframes optionWrong {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-8px); }
+    75%      { transform: translateX(8px); }
+  }
+  .math-hint {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 2px;
+  }
+
+  .lc-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(20px, 4vw, 32px);
+    color: var(--neon-green);
+    text-shadow: 4px 4px 0 #000, 0 0 20px var(--neon-green);
+    margin-bottom: 20px;
+    letter-spacing: 3px;
+  }
+  .lc-stars {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 18px;
+    color: var(--neon-yellow);
+    text-shadow: 2px 2px 0 #000;
+    margin-bottom: 24px;
+  }
+  .lc-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
   /* ===== GAME OVER ===== */
   #gameover .gameover-title {
     font-family: 'Press Start 2P', monospace;
@@ -884,10 +1039,11 @@
       <div class="desc">¡Manejá el auto y esquivá los obstáculos!</div>
       <div class="badge">¡NUEVO!</div>
     </div>
-    <div class="game-card locked">
-      <canvas class="pixel-icon" data-icon="lock" width="16" height="16"></canvas>
-      <div class="name">Próximamente</div>
-      <div class="desc">¡Pronto vienen más juegos!</div>
+    <div class="game-card" data-game="maze">
+      <canvas class="pixel-icon" data-icon="maze" width="16" height="16"></canvas>
+      <div class="name">Laberinto<br>Mágico</div>
+      <div class="desc">¡Explorá el laberinto y resolvé para juntar estrellas!</div>
+      <div class="badge">¡NUEVO!</div>
     </div>
   </div>
 
@@ -987,6 +1143,46 @@
   </div>
 </div>
 
+<!-- ============================ MAZE ============================ -->
+<div id="maze" class="screen">
+  <div id="maze-wrapper">
+    <div id="maze-hud">
+      <button class="icon-btn" id="maze-back-btn">← MENÚ</button>
+      <div class="panel" id="maze-stars-panel">
+        <small>ESTRELLAS</small>
+        <span id="maze-stars">0 / 0</span>
+      </div>
+      <div class="panel" id="maze-level-panel">
+        <small>NIVEL</small>
+        <span id="maze-level">1</span>
+      </div>
+    </div>
+    <canvas id="maze-canvas"></canvas>
+    <div id="maze-tip">USÁ LAS FLECHAS PARA MOVER A JUANI</div>
+  </div>
+
+  <!-- Math modal -->
+  <div id="math-modal">
+    <div class="math-card">
+      <div class="math-prompt" id="math-prompt">5 + 3 = ?</div>
+      <div class="math-options" id="math-options"></div>
+      <div class="math-hint" id="math-hint">Tocá la respuesta correcta</div>
+    </div>
+  </div>
+
+  <!-- Level complete modal -->
+  <div id="level-complete-modal">
+    <div class="level-complete-card">
+      <div class="lc-title">¡NIVEL COMPLETO!</div>
+      <div class="lc-stars" id="lc-stars">★ 0 / 0</div>
+      <div class="lc-actions">
+        <button class="big-btn primary" id="lc-next-btn">SIGUIENTE NIVEL</button>
+        <button class="big-btn secondary" id="lc-menu-btn">MENÚ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============================ GAME OVER ============================ -->
 <div id="gameover" class="screen">
   <div class="gameover-title">¡SE TERMINÓ!</div>
@@ -1043,6 +1239,26 @@ function paint(canvas, sprite) {
     }
   }
 }
+
+// 16x16 maze icon
+const ICON_MAZE = [
+  '................',
+  '.PPPPPPPPPPPPPP.',
+  '.P............P.',
+  '.P.PPPPP.PPPP.P.',
+  '.P.....P....P.P.',
+  '.P.PPP.P.PP.P.P.',
+  '.P.P.P.P.P..P.P.',
+  '.P.P.P...P.PP.P.',
+  '.P.P.PPPPP....P.',
+  '.P.P........PPP.',
+  '.P.PPPPPPPP...P.',
+  '.P............P.',
+  '.PPPPPPPPPPPP.P.',
+  '..............P.',
+  '.PPPPPPPPPPPPPP.',
+  '................',
+];
 
 // 16x16 race icon
 const ICON_RACE = [
@@ -1150,6 +1366,7 @@ document.querySelectorAll('canvas[data-icon]').forEach(c => {
   const t = c.dataset.icon;
   if (t === 'falling') paint(c, ICON_FALLING);
   else if (t === 'race')   paint(c, ICON_RACE);
+  else if (t === 'maze')   paint(c, ICON_MAZE);
   else if (t === 'lock') paint(c, ICON_LOCK);
   // CSS scales them up
   c.style.width = '64px';
@@ -1770,6 +1987,7 @@ const screens = {
   game: document.getElementById('game'),
   carselect: document.getElementById('carselect'),
   race: document.getElementById('race'),
+  maze: document.getElementById('maze'),
   gameover: document.getElementById('gameover'),
 };
 // Track which game ended so "JUGAR OTRA VEZ" returns to the right one
@@ -1786,6 +2004,7 @@ document.querySelectorAll('.game-card[data-game]').forEach(card => {
     const g = card.dataset.game;
     if (g === 'falling') startFallingGame();
     else if (g === 'race') show('carselect');
+    else if (g === 'maze') startMazeGame();
   });
 });
 document.getElementById('carselect-back').addEventListener('click', () => show('menu'));
@@ -2760,6 +2979,504 @@ document.addEventListener('keydown', (e) => {
 });
 document.getElementById('touch-left').addEventListener('click', () => setRaceLane(race.targetLane - 1));
 document.getElementById('touch-right').addEventListener('click', () => setRaceLane(race.targetLane + 1));
+
+/* =====================================================================
+   MAZE GAME — top-down pixel maze, exploration, no time pressure
+   ===================================================================== */
+const mazeCanvas    = document.getElementById('maze-canvas');
+const mazeCtx       = mazeCanvas.getContext('2d');
+const mazeStarsEl   = document.getElementById('maze-stars');
+const mazeLevelEl   = document.getElementById('maze-level');
+const mathModal     = document.getElementById('math-modal');
+const mathPromptEl  = document.getElementById('math-prompt');
+const mathOptionsEl = document.getElementById('math-options');
+const mathHintEl    = document.getElementById('math-hint');
+const lcModal       = document.getElementById('level-complete-modal');
+const lcStarsEl     = document.getElementById('lc-stars');
+
+const TILE = 36;          // px per cell
+const MAZE_W = 13;        // logical width (must be odd in render grid -> 2*W+1=27)
+const MAZE_H = 9;
+const MAZE_BEST_KEY = 'matemagica_maze_best_level';
+
+// Tile codes
+const T_WALL = 1;
+const T_PATH = 0;
+const T_STAR = 2;
+const T_EXIT = 3;
+const T_START = 4;
+
+const maze = {
+  level: 1,
+  grid: null,         // 2D array [y][x]
+  width: 0, height: 0,
+  player: { x: 1, y: 1, px: 1, py: 1, anim: 0 }, // px/py = render position (lerps)
+  starsTotal: 0,
+  starsCollected: 0,
+  pendingStar: null,  // {x, y, eq, options, correct}
+  awaitingMath: false,
+  active: false,
+};
+
+function getMazeBest() { return parseInt(localStorage.getItem(MAZE_BEST_KEY) || '0', 10); }
+function setMazeBest(v) { localStorage.setItem(MAZE_BEST_KEY, String(v)); }
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function generateMaze(W, H) {
+  // Logical paths placed at odd cells; render grid is (2W+1) x (2H+1)
+  const gw = 2 * W + 1, gh = 2 * H + 1;
+  const grid = Array.from({ length: gh }, () => Array(gw).fill(T_WALL));
+  const stack = [[1, 1]];
+  grid[1][1] = T_PATH;
+  while (stack.length) {
+    const [x, y] = stack[stack.length - 1];
+    const dirs = shuffle([[0,-2],[0,2],[-2,0],[2,0]]);
+    let carved = false;
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx, ny = y + dy;
+      if (nx > 0 && nx < gw - 1 && ny > 0 && ny < gh - 1 && grid[ny][nx] === T_WALL) {
+        grid[ny][nx] = T_PATH;
+        grid[y + dy/2][x + dx/2] = T_PATH;
+        stack.push([nx, ny]);
+        carved = true;
+        break;
+      }
+    }
+    if (!carved) stack.pop();
+  }
+  // Add a few random openings to create loops (kid-friendly)
+  const loops = Math.max(2, Math.floor(W * H * 0.04));
+  for (let i = 0; i < loops; i++) {
+    const x = 2 + Math.floor(Math.random() * (gw - 4));
+    const y = 2 + Math.floor(Math.random() * (gh - 4));
+    if (grid[y][x] === T_WALL) {
+      // Only knock out wall if it has 2 path neighbors (not corner walls)
+      const n = (grid[y-1]?.[x] === T_PATH ? 1 : 0)
+              + (grid[y+1]?.[x] === T_PATH ? 1 : 0)
+              + (grid[y]?.[x-1] === T_PATH ? 1 : 0)
+              + (grid[y]?.[x+1] === T_PATH ? 1 : 0);
+      if (n >= 2) grid[y][x] = T_PATH;
+    }
+  }
+  return { grid, w: gw, h: gh };
+}
+
+function placeMazeContents(grid, w, h, level) {
+  // Find all path cells
+  const paths = [];
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      if (grid[y][x] === T_PATH) paths.push([x, y]);
+    }
+  }
+  // Player starts at (1,1)
+  grid[1][1] = T_START;
+  // Exit goes to the farthest reachable cell (use BFS distance)
+  const dist = Array.from({ length: h }, () => Array(w).fill(-1));
+  dist[1][1] = 0;
+  const queue = [[1, 1]];
+  while (queue.length) {
+    const [cx, cy] = queue.shift();
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nx = cx + dx, ny = cy + dy;
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      if (grid[ny][nx] === T_WALL) continue;
+      if (dist[ny][nx] === -1) {
+        dist[ny][nx] = dist[cy][cx] + 1;
+        queue.push([nx, ny]);
+      }
+    }
+  }
+  let bestX = w - 2, bestY = h - 2, bestD = -1;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (dist[y][x] > bestD) { bestD = dist[y][x]; bestX = x; bestY = y; }
+    }
+  }
+  grid[bestY][bestX] = T_EXIT;
+
+  // Place stars on a sample of remaining path cells.
+  const candidates = paths.filter(([x, y]) =>
+    grid[y][x] === T_PATH && Math.abs(x - 1) + Math.abs(y - 1) > 2
+  );
+  shuffle(candidates);
+  const starCount = Math.min(candidates.length, 4 + Math.floor(level / 2)); // 4-8
+  for (let i = 0; i < starCount; i++) {
+    const [x, y] = candidates[i];
+    grid[y][x] = T_STAR;
+  }
+  return { exitX: bestX, exitY: bestY, starCount };
+}
+
+/* ====== PIXEL TILES =================================================
+   Each tile is drawn programmatically per cell. Walls have a brick
+   pattern, paths are sandy with little flecks, stars/exit get sprites.
+*/
+function drawTile(x, y, t) {
+  const px = x * TILE, py = y * TILE;
+  if (t === T_WALL) {
+    // Stone with darker bricks
+    mazeCtx.fillStyle = '#3a2a5a';
+    mazeCtx.fillRect(px, py, TILE, TILE);
+    mazeCtx.fillStyle = '#241647';
+    // bricks
+    const row = Math.floor(y);
+    const offset = (row % 2 === 0) ? 0 : TILE / 2;
+    for (let i = 0; i < 2; i++) {
+      mazeCtx.fillRect(px + offset + i * (TILE), py + 4, 2, TILE - 8);
+    }
+    mazeCtx.fillRect(px, py + Math.floor(TILE / 2), TILE, 2);
+    // Highlight
+    mazeCtx.fillStyle = 'rgba(177, 74, 237, 0.18)';
+    mazeCtx.fillRect(px, py, TILE, 4);
+  } else {
+    // Path: warm sandy tile
+    const grad = Math.random() > 0.5;
+    mazeCtx.fillStyle = '#1a0d3a';
+    mazeCtx.fillRect(px, py, TILE, TILE);
+    // Subtle dots (deterministic by position so it doesn't shimmer)
+    const seed = (x * 31 + y * 17) & 7;
+    if (seed < 3) {
+      mazeCtx.fillStyle = '#2d1b69';
+      mazeCtx.fillRect(px + 6 + seed * 4, py + 8 + seed * 3, 2, 2);
+    }
+  }
+}
+
+function drawStar(x, y) {
+  const px = x * TILE, py = y * TILE;
+  // glow halo
+  const grad = mazeCtx.createRadialGradient(
+    px + TILE/2, py + TILE/2, 4,
+    px + TILE/2, py + TILE/2, TILE/2
+  );
+  grad.addColorStop(0, 'rgba(255, 230, 0, 0.5)');
+  grad.addColorStop(1, 'rgba(255, 230, 0, 0)');
+  mazeCtx.fillStyle = grad;
+  mazeCtx.fillRect(px, py, TILE, TILE);
+  // pixel star
+  drawPixelSprite(px + 6, py + 6, SPRITE_STAR, (TILE - 12) / 16);
+}
+
+function drawExit(x, y) {
+  const px = x * TILE, py = y * TILE;
+  // pulsing portal
+  const t = performance.now() / 200;
+  const r = 4 + Math.sin(t) * 2;
+  const grad = mazeCtx.createRadialGradient(
+    px + TILE/2, py + TILE/2, r,
+    px + TILE/2, py + TILE/2, TILE/1.5
+  );
+  grad.addColorStop(0, '#00ff88');
+  grad.addColorStop(0.5, '#00f0ff');
+  grad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+  mazeCtx.fillStyle = grad;
+  mazeCtx.fillRect(px - 4, py - 4, TILE + 8, TILE + 8);
+  // inner core
+  mazeCtx.fillStyle = '#fff';
+  mazeCtx.beginPath();
+  mazeCtx.arc(px + TILE/2, py + TILE/2, 5 + Math.sin(t) * 1.5, 0, Math.PI * 2);
+  mazeCtx.fill();
+}
+
+function drawStart(x, y) {
+  const px = x * TILE, py = y * TILE;
+  mazeCtx.fillStyle = '#1a0d3a';
+  mazeCtx.fillRect(px, py, TILE, TILE);
+  mazeCtx.fillStyle = 'rgba(255, 46, 142, 0.25)';
+  mazeCtx.fillRect(px + 4, py + 4, TILE - 8, TILE - 8);
+  mazeCtx.fillStyle = '#ff2e8e';
+  mazeCtx.font = 'bold 10px "Press Start 2P", monospace';
+  mazeCtx.textAlign = 'center';
+  mazeCtx.textBaseline = 'middle';
+  mazeCtx.fillText('★', px + TILE/2, py + TILE/2);
+}
+
+function drawPixelSprite(px, py, sprite, scale = 1) {
+  for (let y = 0; y < sprite.length; y++) {
+    for (let x = 0; x < sprite[0].length; x++) {
+      const ch = sprite[y][x];
+      const c = palette[ch];
+      if (c) {
+        mazeCtx.fillStyle = c;
+        mazeCtx.fillRect(
+          Math.round(px + x * scale),
+          Math.round(py + y * scale),
+          Math.ceil(scale),
+          Math.ceil(scale)
+        );
+      }
+    }
+  }
+}
+
+function drawPlayer() {
+  const px = maze.player.px * TILE;
+  const py = maze.player.py * TILE;
+  // Wizard is 16x20, scale to ~28
+  const scale = (TILE - 6) / 16;
+  // Bobbing effect
+  const bob = Math.sin(performance.now() / 200) * 1.5;
+  drawPixelSprite(px + 4, py + 4 + bob, WIZARD, scale);
+}
+
+function renderMaze() {
+  if (!maze.grid) return;
+  mazeCtx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
+  for (let y = 0; y < maze.height; y++) {
+    for (let x = 0; x < maze.width; x++) {
+      const t = maze.grid[y][x];
+      // Always draw the underlying tile (path/wall)
+      if (t === T_WALL) drawTile(x, y, T_WALL);
+      else drawTile(x, y, T_PATH);
+      // Then overlay sprites
+      if (t === T_STAR) drawStar(x, y);
+      else if (t === T_EXIT) drawExit(x, y);
+      else if (t === T_START) drawStart(x, y);
+    }
+  }
+  drawPlayer();
+}
+
+let mazeRafId = null;
+function mazeLoop() {
+  if (!maze.active) return;
+  // Animate player position toward target (smooth walk)
+  const speed = 0.2;
+  const dx = maze.player.x - maze.player.px;
+  const dy = maze.player.y - maze.player.py;
+  if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
+    maze.player.px += dx * speed;
+    maze.player.py += dy * speed;
+  } else {
+    maze.player.px = maze.player.x;
+    maze.player.py = maze.player.y;
+  }
+  renderMaze();
+  mazeRafId = requestAnimationFrame(mazeLoop);
+}
+
+function tryMove(dx, dy) {
+  if (!maze.active || maze.awaitingMath) return;
+  // Only allow new move once player has nearly reached current target
+  if (Math.abs(maze.player.x - maze.player.px) > 0.15 ||
+      Math.abs(maze.player.y - maze.player.py) > 0.15) return;
+  const nx = maze.player.x + dx;
+  const ny = maze.player.y + dy;
+  if (nx < 0 || ny < 0 || nx >= maze.width || ny >= maze.height) return;
+  const target = maze.grid[ny][nx];
+  if (target === T_WALL) return;
+  // Move
+  maze.player.x = nx;
+  maze.player.y = ny;
+  note(440 + (dx + dy) * 30, 0, 0.03, 'triangle', 0.06);
+  // Trigger interactions when arrival happens — schedule short delay
+  setTimeout(() => onPlayerArrived(nx, ny), 220);
+}
+
+function onPlayerArrived(x, y) {
+  if (!maze.active) return;
+  const t = maze.grid[y][x];
+  if (t === T_STAR) {
+    promptMath(x, y);
+  } else if (t === T_EXIT) {
+    completeLevel();
+  }
+}
+
+function newMazeEquation(level) {
+  const max = Math.min(8 + level * 2, 18);
+  const op = Math.random() < 0.5 ? '+' : '-';
+  let a, b, answer;
+  if (op === '+') {
+    a = 1 + Math.floor(Math.random() * max);
+    b = 1 + Math.floor(Math.random() * max);
+    answer = a + b;
+  } else {
+    a = 2 + Math.floor(Math.random() * (max + 2));
+    b = 1 + Math.floor(Math.random() * a);
+    answer = a - b;
+  }
+  // 4 options
+  const opts = new Set([answer]);
+  while (opts.size < 4) {
+    let d = answer + (Math.floor(Math.random() * 9) - 4);
+    if (d < 0) d = Math.abs(d) + 1;
+    opts.add(d);
+  }
+  const options = shuffle(Array.from(opts));
+  return { a, op, b, answer, options };
+}
+
+function promptMath(starX, starY) {
+  const eq = newMazeEquation(maze.level);
+  maze.awaitingMath = true;
+  maze.pendingStar = { x: starX, y: starY, eq };
+  mathPromptEl.textContent = `${eq.a} ${eq.op} ${eq.b} = ?`;
+  mathHintEl.textContent = 'Tocá la respuesta correcta';
+  mathOptionsEl.innerHTML = '';
+  for (const opt of eq.options) {
+    const btn = document.createElement('button');
+    btn.className = 'math-option';
+    btn.textContent = String(opt);
+    btn.addEventListener('click', () => answerMath(btn, opt));
+    mathOptionsEl.appendChild(btn);
+  }
+  mathModal.classList.add('show');
+  // Soft attention sound
+  note(880, 0, 0.06, 'square', 0.14);
+  note(1320, 0.06, 0.10, 'triangle', 0.10);
+}
+
+function answerMath(btn, opt) {
+  const { eq, x, y } = maze.pendingStar;
+  if (opt === eq.answer) {
+    btn.classList.add('correct');
+    sndCorrect();
+    setTimeout(() => {
+      maze.grid[y][x] = T_PATH;
+      maze.starsCollected++;
+      mazeStarsEl.textContent = `${maze.starsCollected} / ${maze.starsTotal}`;
+      mathModal.classList.remove('show');
+      maze.awaitingMath = false;
+      maze.pendingStar = null;
+    }, 500);
+  } else {
+    btn.classList.add('wrong');
+    sndWrong();
+    mathHintEl.textContent = '¡Probá de nuevo!';
+    setTimeout(() => btn.classList.remove('wrong'), 500);
+  }
+}
+
+function completeLevel() {
+  maze.active = false;
+  if (mazeRafId) cancelAnimationFrame(mazeRafId);
+  sndLevelUp();
+  // Save best
+  const best = getMazeBest();
+  if (maze.level > best) setMazeBest(maze.level);
+  lcStarsEl.textContent = `★ ${maze.starsCollected} / ${maze.starsTotal}`;
+  lcModal.classList.add('show');
+}
+
+function startMazeGame(level = 1) {
+  lastGame = 'maze';
+  show('maze');
+  // Lazy: stop any running music; maze is calm and silent
+  stopMusic();
+  maze.level = level;
+  mazeLevelEl.textContent = String(level);
+  // Generate
+  const sized = Math.min(13, 9 + Math.floor(level / 2)); // grow gently
+  const W = sized;
+  const H = Math.max(7, sized - 4);
+  const { grid, w, h } = generateMaze(W, H);
+  const { starCount } = placeMazeContents(grid, w, h, level);
+  maze.grid = grid;
+  maze.width = w;
+  maze.height = h;
+  maze.starsTotal = starCount;
+  maze.starsCollected = 0;
+  maze.player = { x: 1, y: 1, px: 1, py: 1, anim: 0 };
+  maze.awaitingMath = false;
+  maze.pendingStar = null;
+  mazeStarsEl.textContent = `0 / ${starCount}`;
+  // Size canvas
+  mazeCanvas.width = w * TILE;
+  mazeCanvas.height = h * TILE;
+  // Cap visual size on small screens via CSS scale
+  const maxW = Math.min(window.innerWidth - 60, 900);
+  const maxH = Math.min(window.innerHeight - 200, 700);
+  const scale = Math.min(maxW / mazeCanvas.width, maxH / mazeCanvas.height, 1);
+  mazeCanvas.style.width = (mazeCanvas.width * scale) + 'px';
+  mazeCanvas.style.height = (mazeCanvas.height * scale) + 'px';
+  mathModal.classList.remove('show');
+  lcModal.classList.remove('show');
+  maze.active = true;
+  mazeRafId = requestAnimationFrame(mazeLoop);
+}
+
+function stopMazeGame() {
+  maze.active = false;
+  if (mazeRafId) cancelAnimationFrame(mazeRafId);
+  mathModal.classList.remove('show');
+  lcModal.classList.remove('show');
+}
+
+document.getElementById('maze-back-btn').addEventListener('click', () => {
+  stopMazeGame();
+  show('menu');
+});
+document.getElementById('lc-next-btn').addEventListener('click', () => {
+  lcModal.classList.remove('show');
+  startMazeGame(maze.level + 1);
+});
+document.getElementById('lc-menu-btn').addEventListener('click', () => {
+  lcModal.classList.remove('show');
+  stopMazeGame();
+  show('menu');
+});
+
+// Keyboard input for the maze
+document.addEventListener('keydown', (e) => {
+  if (!maze.active) return;
+  if (maze.awaitingMath) {
+    // Escape dismisses the math prompt — star stays, can be retried
+    if (e.key === 'Escape') {
+      mathModal.classList.remove('show');
+      maze.awaitingMath = false;
+      maze.pendingStar = null;
+    }
+    return;
+  }
+  let dx = 0, dy = 0;
+  switch (e.key) {
+    case 'ArrowUp':    case 'w': case 'W': dy = -1; break;
+    case 'ArrowDown':  case 's': case 'S': dy = 1; break;
+    case 'ArrowLeft':  case 'a': case 'A': dx = -1; break;
+    case 'ArrowRight': case 'd': case 'D': dx = 1; break;
+    default: return;
+  }
+  e.preventDefault();
+  tryMove(dx, dy);
+});
+
+// Click outside the math card to dismiss
+mathModal.addEventListener('click', (e) => {
+  if (e.target === mathModal && maze.awaitingMath) {
+    mathModal.classList.remove('show');
+    maze.awaitingMath = false;
+    maze.pendingStar = null;
+  }
+});
+
+// Touch swipe controls for the maze
+(function setupMazeTouch() {
+  let sx = 0, sy = 0, tracking = false;
+  mazeCanvas.addEventListener('touchstart', (e) => {
+    if (!maze.active) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; tracking = true;
+  });
+  mazeCanvas.addEventListener('touchmove', (e) => {
+    if (!tracking) return;
+    const dx = e.touches[0].clientX - sx;
+    const dy = e.touches[0].clientY - sy;
+    if (Math.abs(dx) > 25 || Math.abs(dy) > 25) {
+      if (Math.abs(dx) > Math.abs(dy)) tryMove(dx > 0 ? 1 : -1, 0);
+      else tryMove(0, dy > 0 ? 1 : -1);
+      tracking = false;
+    }
+  });
+  mazeCanvas.addEventListener('touchend', () => tracking = false);
+})();
 
 // Resume audio on first interaction (browser policy)
 document.addEventListener('click', () => getCtx(), { once: true });
