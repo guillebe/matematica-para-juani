@@ -669,6 +669,110 @@
     text-shadow: 4px 4px 0 #000, 0 0 30px var(--neon-green);
   }
 
+  /* Math gate (3 number boxes + checkpoint line) */
+  .race-gate {
+    position: absolute;
+    pointer-events: none;
+    z-index: 6;
+    will-change: transform, top;
+  }
+  .gate-num {
+    position: absolute;
+    width: 64px; height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 22px;
+    color: #000;
+    border: 4px solid #000;
+    box-shadow: 4px 4px 0 #000, inset -4px -4px 0 rgba(0,0,0,0.18), inset 4px 4px 0 rgba(255,255,255,0.45);
+    image-rendering: pixelated;
+  }
+  .gate-num.color-0 { background: var(--neon-pink); }
+  .gate-num.color-1 { background: var(--neon-cyan); }
+  .gate-num.color-2 { background: var(--neon-yellow); }
+  .gate-num.color-3 { background: var(--neon-green); }
+  .gate-line {
+    position: absolute;
+    top: 70px;
+    left: 0; right: 0;
+    height: 6px;
+    background: var(--neon-cyan);
+    box-shadow: 0 0 16px var(--neon-cyan), 0 0 4px #fff inset;
+    animation: gateGlow 0.5s steps(2) infinite alternate;
+  }
+  @keyframes gateGlow {
+    from { box-shadow: 0 0 16px var(--neon-cyan); }
+    to   { box-shadow: 0 0 24px var(--neon-pink); background: var(--neon-pink); }
+  }
+  .gate-num.correct-flash { animation: gateCorrect 400ms steps(4); }
+  .gate-num.wrong-flash   { animation: gateWrong 400ms steps(4); }
+  @keyframes gateCorrect {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.4) rotate(-8deg); filter: brightness(1.6); }
+  }
+  @keyframes gateWrong {
+    0%, 100% { filter: hue-rotate(0deg); }
+    50%      { filter: hue-rotate(-60deg) brightness(0.6); transform: translateX(-6px); }
+  }
+
+  /* Equation banner (visible only when a gate is incoming) */
+  #race-equation-bar {
+    position: absolute;
+    top: 80px; left: 50%;
+    transform: translateX(-50%) translateY(-40px);
+    z-index: 22;
+    background: rgba(10, 4, 32, 0.95);
+    border: 4px solid var(--neon-yellow);
+    box-shadow: 6px 6px 0 #000, 0 0 24px rgba(255,230,0,0.5);
+    padding: 14px 26px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(18px, 3.5vw, 28px);
+    color: var(--neon-yellow);
+    text-shadow: 3px 3px 0 #000;
+    letter-spacing: 4px;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 240ms steps(3), transform 240ms steps(3);
+  }
+  #race-equation-bar.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  #race-equation-bar.flash-good { animation: flashGood 400ms steps(4); }
+  #race-equation-bar.flash-bad  { animation: flashBad 400ms steps(4); }
+
+  /* Level-up banner */
+  #level-banner {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.6);
+    z-index: 40;
+    pointer-events: none;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(22px, 5vw, 48px);
+    color: var(--neon-pink);
+    text-shadow: 4px 4px 0 #000, 0 0 20px var(--neon-pink);
+    letter-spacing: 4px;
+    text-align: center;
+    padding: 18px 28px;
+    background: rgba(10, 4, 32, 0.85);
+    border: 4px solid var(--neon-pink);
+    box-shadow: 8px 8px 0 #000;
+    opacity: 0;
+    white-space: nowrap;
+  }
+  #level-banner.show {
+    animation: levelBannerPop 1800ms steps(8) forwards;
+  }
+  @keyframes levelBannerPop {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-6deg); }
+    20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(2deg); }
+    35%  { transform: translate(-50%, -50%) scale(1.0) rotate(0deg); }
+    80%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  }
+
   #boost-flash {
     position: absolute; inset: 0;
     pointer-events: none;
@@ -876,8 +980,10 @@
       <span id="race-distance">0 m</span>
     </div>
 
+    <div id="race-equation-bar">7 + 5 = ?</div>
     <div id="race-ready-overlay">¡LISTO!</div>
     <div id="boost-flash"></div>
+    <div id="level-banner"></div>
   </div>
 </div>
 
@@ -2101,6 +2207,8 @@ const raceDistEl    = document.getElementById('race-distance');
 const raceHearts    = Array.from(document.querySelectorAll('.heart[data-rheart]'));
 const raceReady     = document.getElementById('race-ready-overlay');
 const boostFlash    = document.getElementById('boost-flash');
+const raceEqBar     = document.getElementById('race-equation-bar');
+const levelBanner   = document.getElementById('level-banner');
 
 const race = {
   running: false,
@@ -2121,6 +2229,10 @@ const race = {
   spawnEvery: 1.0,   // seconds between spawns (eased difficulty)
   lastTick: 0,
   invulnUntil: 0,    // brief invulnerability after hit
+  gate: null,        // active math gate (or null)
+  gateTimer: 6,      // seconds until next gate
+  level: 1,
+  nextLevelDist: 1000,
 };
 
 const RACE_BEST_KEY = 'matemagica_race_best';
@@ -2238,6 +2350,177 @@ function updatePlayerCarPos() {
   race.lane = Math.max(0, Math.min(laneCount() - 1, settledLane));
 }
 
+function newRaceEquation(level) {
+  // Difficulty scales with level
+  const max = Math.min(8 + level * 2, 20);
+  const op = Math.random() < 0.5 ? '+' : '-';
+  let a, b, answer;
+  if (op === '+') {
+    a = 1 + Math.floor(Math.random() * max);
+    b = 1 + Math.floor(Math.random() * max);
+    answer = a + b;
+  } else {
+    a = 2 + Math.floor(Math.random() * (max + 2));
+    b = 1 + Math.floor(Math.random() * a);
+    answer = a - b;
+  }
+  return { a, op, b, answer };
+}
+
+function spawnGate() {
+  const eq = newRaceEquation(race.level);
+  const correctLane = Math.floor(Math.random() * 3);
+  const numbers = [null, null, null];
+  numbers[correctLane] = eq.answer;
+  // Distractors near the answer
+  const used = new Set([eq.answer]);
+  for (let lane = 0; lane < 3; lane++) {
+    if (numbers[lane] !== null) continue;
+    let d, tries = 0;
+    do {
+      d = eq.answer + (Math.floor(Math.random() * 7) - 3);
+      if (d < 0) d = Math.abs(d) + 1;
+      tries++;
+    } while (used.has(d) && tries < 8);
+    used.add(d);
+    numbers[lane] = d;
+  }
+
+  const container = document.createElement('div');
+  container.className = 'race-gate';
+  raceObjects.appendChild(container);
+
+  const elements = [];
+  for (let lane = 0; lane < 3; lane++) {
+    const box = document.createElement('div');
+    box.className = 'gate-num color-' + (lane === correctLane ? 3 : (lane % 3));
+    box.textContent = String(numbers[lane]);
+    container.appendChild(box);
+    elements.push(box);
+  }
+  const line = document.createElement('div');
+  line.className = 'gate-line';
+  container.appendChild(line);
+
+  const gate = {
+    el: container,
+    elements,
+    line,
+    eq,
+    numbers,
+    correctLane,
+    y: -100,
+    checked: false,
+    expireAt: 0,
+  };
+  positionGate(gate);
+  race.gate = gate;
+
+  // Show equation banner
+  raceEqBar.textContent = `${eq.a} ${eq.op} ${eq.b} = ?`;
+  raceEqBar.classList.remove('flash-good', 'flash-bad');
+  raceEqBar.classList.add('visible');
+}
+
+function positionGate(gate) {
+  const rr = roadRect();
+  gate.el.style.left = rr.left + 'px';
+  gate.el.style.width = rr.width + 'px';
+  gate.el.style.top = gate.y + 'px';
+  // Place each gate-num at its lane center
+  for (let lane = 0; lane < 3; lane++) {
+    const box = gate.elements[lane];
+    const cx = rr.laneWidth * (lane + 0.5);
+    box.style.left = (cx - 32) + 'px';
+    box.style.top = '0px';
+  }
+}
+
+function resolveGate(gate) {
+  gate.checked = true;
+  const playerLane = race.lane;
+  const correctBox = gate.elements[gate.correctLane];
+  if (playerLane === gate.correctLane) {
+    // Correct!
+    sndCorrect();
+    correctBox.classList.add('correct-flash');
+    race.score += 50;
+    race.boostUntil = performance.now() + 1500;
+    boostFlash.classList.add('active');
+    setTimeout(() => {
+      if (performance.now() >= race.boostUntil) boostFlash.classList.remove('active');
+    }, 1500);
+    raceEqBar.classList.add('flash-good');
+    spawnGateBurst(gate, '#00ff88', 18);
+  } else {
+    // Wrong!
+    sndWrong();
+    if (gate.elements[playerLane]) {
+      gate.elements[playerLane].classList.add('wrong-flash');
+    }
+    correctBox.classList.add('correct-flash'); // reveal correct
+    race.invulnUntil = performance.now() + 1400;
+    race.slowUntil = performance.now() + 700;
+    race.lives--;
+    raceHearts.forEach((c, i) => {
+      if (i >= race.lives) c.classList.add('lost');
+      else c.classList.remove('lost');
+    });
+    raceShake.classList.remove('shaking');
+    void raceShake.offsetWidth;
+    raceShake.classList.add('shaking');
+    raceEqBar.classList.add('flash-bad');
+    spawnGateBurst(gate, '#ff3860', 14);
+    if (race.lives <= 0) {
+      gate.expireAt = performance.now() + 200;
+      endRaceGame();
+      return;
+    }
+  }
+  raceScoreEl.textContent = Math.floor(race.score);
+  // Schedule banner hide after gate passes
+  gate.expireAt = performance.now() + 800;
+}
+
+function spawnGateBurst(gate, color, count) {
+  const rr = roadRect();
+  const cx = rr.laneWidth * (gate.correctLane + 0.5) + rr.left;
+  const cy = gate.y + 32;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.background = color;
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    raceObjects.appendChild(p);
+    const a = Math.random() * Math.PI * 2;
+    const sp = 100 + Math.random() * 220;
+    setTimeout(() => p.remove(), 700);
+    p.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${Math.cos(a)*sp*0.6}px, ${Math.sin(a)*sp*0.6}px) scale(0)`, opacity: 0 },
+    ], { duration: 700, easing: 'ease-out' });
+  }
+}
+
+function removeGate() {
+  if (!race.gate) return;
+  race.gate.el.remove();
+  race.gate = null;
+  raceEqBar.classList.remove('visible', 'flash-good', 'flash-bad');
+}
+
+function showLevelUp() {
+  race.level++;
+  race.baseSpeed += 18;
+  // Speed up gate cadence very slightly
+  levelBanner.textContent = `¡NIVEL ${race.level}!`;
+  levelBanner.classList.remove('show');
+  void levelBanner.offsetWidth;
+  levelBanner.classList.add('show');
+  sndLevelUp();
+}
+
 function raceTick(now) {
   if (!race.running) return;
   if (!race.lastTick) race.lastTick = now;
@@ -2257,13 +2540,49 @@ function raceTick(now) {
   raceDistEl.textContent = Math.floor(race.distance) + ' m';
   raceScoreEl.textContent = Math.floor(race.score);
 
-  // Spawn items
-  race.spawnTimer += dt;
-  if (race.spawnTimer > race.spawnEvery) {
+  // Level-up every 1000 m
+  if (race.distance >= race.nextLevelDist) {
+    race.nextLevelDist += 1000;
+    showLevelUp();
+  }
+
+  // Math gate scheduling
+  const gateBlocking = !!race.gate;
+  if (!gateBlocking) {
+    race.gateTimer -= dt;
+    if (race.gateTimer <= 0) {
+      spawnGate();
+      // Next gate every 9-12 sec; gets a bit more frequent at higher level
+      race.gateTimer = Math.max(7, 11 - race.level * 0.4);
+    }
+  }
+
+  // Move active gate
+  if (race.gate) {
+    race.gate.y += speed * dt;
+    positionGate(race.gate);
+    const carBoxYTop = roadRect().height - 96 - 20;
+    if (!race.gate.checked && race.gate.y + 32 >= carBoxYTop) {
+      resolveGate(race.gate);
+    }
+    // Remove gate after it passes off-screen and post-banner timer
+    if (race.gate.y > roadRect().height + 80 &&
+        (!race.gate.expireAt || performance.now() > race.gate.expireAt)) {
+      removeGate();
+    }
+  }
+
+  // Spawn regular items (skip while gate is on screen for clarity)
+  if (!gateBlocking) {
+    race.spawnTimer += dt;
+    if (race.spawnTimer > race.spawnEvery) {
+      race.spawnTimer = 0;
+      spawnRaceItem();
+      // Very easy difficulty: spawn rate barely changes
+      race.spawnEvery = Math.max(1.4, 1.8 - race.distance * 0.0003);
+    }
+  } else {
     race.spawnTimer = 0;
-    spawnRaceItem();
-    // Very easy difficulty: spawn rate barely changes
-    race.spawnEvery = Math.max(1.4, 1.8 - race.distance * 0.0003);
   }
 
   // Move items down
@@ -2355,10 +2674,16 @@ async function startRaceGame(carIdx) {
   race.spawnEvery = 1.8;
   race.lastTick = 0;
   race.invulnUntil = 0;
+  race.gate = null;
+  race.gateTimer = 6;
+  race.level = 1;
+  race.nextLevelDist = 1000;
   raceHearts.forEach(c => c.classList.remove('lost'));
   raceObjects.innerHTML = '';
   raceScoreEl.textContent = '0';
   raceDistEl.textContent = '0 m';
+  raceEqBar.classList.remove('visible', 'flash-good', 'flash-bad');
+  levelBanner.classList.remove('show');
   boostFlash.classList.remove('active');
 
   // Position car initially at center lane
@@ -2392,7 +2717,10 @@ function stopRaceGame() {
   race.rafId = null;
   race.items.forEach(i => i.el.remove());
   race.items = [];
+  if (race.gate) { race.gate.el.remove(); race.gate = null; }
   raceObjects.innerHTML = '';
+  raceEqBar.classList.remove('visible', 'flash-good', 'flash-bad');
+  levelBanner.classList.remove('show');
   boostFlash.classList.remove('active');
   stopMusic();
 }
